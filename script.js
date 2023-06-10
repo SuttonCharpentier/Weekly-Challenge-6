@@ -1,98 +1,141 @@
-function GetInfo() {
+// Variables
+const searchBtn = document.querySelector('.btn');
+const showCurrent = document.querySelector('.show-current-city');
+const searchList = document.querySelector('.list-group');
+const dayOne = document.querySelector('.day-1');
+const dayTwo = document.querySelector('.day-2');
+const dayThree = document.querySelector('.day-3');
+const dayFour = document.querySelector('.day-4');
+const dayFive = document.querySelector('.day-5');
+const keyApi = 'a9e9a4caf387b979bb5c239fbceb489a';
+const apiUrl = 'https://api.openweathermap.org/data/2.5';
 
-    var newName = document.getElementById("cityInput");
-    var cityName = document.getElementById("cityName");
-    cityName.innerHTML = "--"+newName.value+"--";
+// Get weather
+function getWeather() {
+    const city = JSON.parse(localStorage.getItem('coords'));
+    fetch(`${apiUrl}/weather?lat=${city.lat}&lon=${city.long}&appid=${keyApi}&units=imperial`)
+        .then(function(response){
+            return response.json()
+        })
+        .then(function (data) {
+            showCurrent.style.background = '#1986e6';
+            showCurrent.style.opacity = '.7';
+            showCurrent.style.borderRadius = '10px';
+            showCurrent.innerHTML = `<p>${data.name} ${dayjs().format('MM/DD/YYYY')}<p/>
+                    <img  class ="icon" src="http://openweathermap.org/img/wn/${data.weather[0].icon}.png" alt=""> 
+                    <p> ${'Temp:'} ${data.main.temp} <p>
+                    <p> ${'Humidity:'} ${data.main.humidity}</p>
+                    <p>  ${'Wind:'} ${data.wind.speed}</p>`
+// 5 days forecast
+            fetch(`${apiUrl}/forecast?lat=${city.lat}&lon=${city.long}&appid=${keyApi}&units=imperial`)
+                .then(function(response) {
+                    return response.json()
+                        .then(function (data) {
+                            data.list.every(myFunction);
+                            function myFunction(value, index, array) {
+                                var arr = [];
+                                for (i = 0; i < array.length; i = i + 8) {
+                                    arr.push(array[i]);
+                                }
+                                dayOne.innerHTML =
+                                    `
+                                    <p>${dayjs().add(1, 'day').format('MM/DD/YY')}</p>
+                    <img src="http://openweathermap.org/img/wn/${array[0].weather[0].icon}.png" alt=""> 
+                    <p> ${'Temp:'} ${array[0].main.temp} <p>
+                    <p> ${'Humidity:'} ${array[0].main.humidity}</p>
+                    <p>  ${'Wind:'} ${array[0].wind.speed}</p>`;
+                                dayTwo.innerHTML =
+                                    `<p>${dayjs().add(2, 'day').format('MM/DD/YY')}</p>
+                                    <img src="http://openweathermap.org/img/wn/${array[1].weather[0].icon}.png" alt=""> 
+                    <p> ${'Temp:'} ${array[1].main.temp} <p>
+                    <p> ${'Humidity:'} ${array[1].main.humidity}</p>
+                    <p>  ${'Wind:'} ${array[1].wind.speed}</p>`;
+                                dayThree.innerHTML =
+                                    `<p>${dayjs().add(3, 'day').format('MM/DD/YY')}</p>
+                                    <img src="http://openweathermap.org/img/wn/${array[2].weather[0].icon}.png" alt=""> 
+                    <p> ${'Temp:'} ${array[2].main.temp} <p>
+                    <p> ${'Humidity:'} ${array[2].main.humidity}</p>
+                    <p>  ${'Wind:'} ${array[2].wind.speed}</p>`;
+                                dayFour.innerHTML =
+                                    `<p>${dayjs().add(4, 'day').format('MM/DD/YY')}</p>
+                                    <img src="http://openweathermap.org/img/wn/${array[3].weather[0].icon}.png" alt=""> 
+                    <p> ${'Temp:'} ${array[3].main.temp} <p>
+                    <p> ${'Humidity:'} ${array[3].main.humidity}</p>
+                    <p> ${'Wind:'} ${array[3].wind.speed}</p>`;
+                                dayFive.innerHTML =
+                                    `<p>${dayjs().add(5, 'day').format('MM/DD/YY')}</p>
+                                    <img src="http://openweathermap.org/img/wn/${array[4].weather[0].icon}.png" alt=""> 
+                    <p> ${'Temp:'} ${array[4].main.temp} <p>
+                    <p> ${'Humidity:'} ${array[4].main.humidity}</p>
+                    <p>  ${'Wind:'} ${array[4].wind.speed}</p>`;
+                            }
+                        }) 
+                })
+        })
+    addText();
+}
+// Shows text above 5day forecast
+function addText() {
+    document.querySelector('.text').innerHTML = `
+    <h3>5Day forecast</h3>
+    `
+}
 
-fetch('https://api.openweathermap.org/data/2.5/forecast?q='+newName.value+'&appid=32ba0bfed592484379e51106cef3f204')
-.then(response => response.json())
-.then(data => {
+ // Get the latitude and longitude of the city
+function getLatitudeAndLongitude(name) {
+    let cityName = name.length ? name : document.querySelector('#tags').value;
+    fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&appid=${keyApi}`)
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            if (!data.length) {
+                alert('City not found!')
+                return
+            }
+            localStorage.clear()
+            localStorage.setItem('coords', JSON.stringify({ lat: `${data[0].lat}`, long: `${data[0].lon}`, name: cityName }));
+            getWeather();
+            createButton();
+        })
+}
+// Show weather clicking on a button.
+function showWeatherClickingOnButton(name) {
+    let cityName = name.length ? name : document.querySelector('#tags').value;
+    fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&appid=${keyApi}`)
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            if (!data.length) {
+                testResult.style.border = "1px solid red";
+                alert('City not found!')
+                return
+            }
+            localStorage.clear();
+            localStorage.setItem('coords', JSON.stringify({ lat: `${data[0].lat}`, long: `${data[0].lon}`, name: cityName }));
+            getWeather();
+        })
+}
+// Create a new city button
+function createButton() {
+    const city = JSON.parse(localStorage.getItem('coords'));
+    fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${city.lat}&lon=${city.long}&appid=${keyApi}&units=imperial`)
+    .then(function (response) {
+        return response.json()
+            .then(function (data) {
+                    let list = document.createElement('button');
+                    list.classList.add('btn', 'bg-primary', 'text-light', 'mt-2', 'btn-city');
+                    list.setAttribute('data-city', city.name);
+                    searchList.append(list);
+                    list.textContent = city.name;
+            })
+    })
+}
 
-    for(i = 0; i<5; i++){
-        document.getElementById("day" + (i+1) + "Min").innerHTML = "Min: " + Number(data.list[i].main.temp_min - 273.15).toFixed(1)+ "°";
-    }
-
-    for(i = 0; i<5; i++){
-        document.getElementById("day" + (i+1) + "Max").innerHTML = "Max: " + Number(data.list[i].main.temp_max - 273.15).toFixed(2) + "°";
-    }
-
-     for(i = 0; i<5; i++){
-        document.getElementById("img" + (i+1)).src = "http://openweathermap.org/img/wn/"+
-        data.list[i].weather[0].icon
-        +".png";
-    }
-    console.log(data)
-
-
+// Adds event listeners to the search list.
+searchList.addEventListener('click', function (event) {
+    let dataFromButton = event.target.getAttribute('data-city');
+    showWeatherClickingOnButton(dataFromButton);
 })
-
-.catch(err => alert("Something Went Wrong: Try Checking Your Internet Coneciton"))
-}
-
-function DefaultScreen(){
-    document.getElementById("cityInput").defaultValue = "London";
-    GetInfo();
-}
-
-
-var d = new Date();
-var weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",];
-
-function CheckDay(day){
-    if(day + d.getDay() > 6){
-        return day + d.getDay() - 7;
-    }
-    else{
-        return day + d.getDay();
-    }
-}
-
-    for(i = 0; i<5; i++){
-        document.getElementById("day" + (i+1)).innerHTML = weekday[CheckDay(i)];
-    }
-
-
-
-document.getElementById("day1Min").innerHTML = Math.round(data.list[0].main.temp_min - 273.15, -2);
-document.getElementById("day2Min").innerHTML = Math.round(data.list[1].main.temp_min - 273.15, -2);
-document.getElementById("day3Min").innerHTML = Math.round(data.list[2].main.temp_min - 273.15, -2);
-document.getElementById("day4Min").innerHTML = Math.round(data.list[3].main.temp_min - 273.15, -2);
-document.getElementById("day5Min").innerHTML = Math.round(data.list[4].main.temp_min - 273.15, -2);
-
-document.getElementById("day1Max").innerHTML = Math.round(data.list[0].main.temp_max - 273.15, -2);
-document.getElementById("day2Max").innerHTML = Math.round(data.list[0].main.temp_max - 273.15, -2);
-document.getElementById("day3Max").innerHTML = Math.round(data.list[0].main.temp_max - 273.15, -2);
-document.getElementById("day4Max").innerHTML = Math.round(data.list[0].main.temp_max - 273.15, -2);
-document.getElementById("day5Max").innerHTML = Math.round(data.list[0].main.temp_max - 273.15, -2);
-
-document.getElementById("img1").src = "http://openweathermap.org/img/w/"+
-data.list[0].weather[0].icon
-+".png";
-document.getElementById("img2").src = "http://openweathermap.org/img/w/"+
-data.list[1].weather[0].icon
-+".png";
-document.getElementById("img3").src = "http://openweathermap.org/img/w/"+
-data.list[2].weather[0].icon
-+".png";
-document.getElementById("img4").src = "http://openweathermap.org/img/w/"+
-data.list[3].weather[0].icon
-+".png";
-document.getElementById("img5").src = "http://openweathermap.org/img/w/"+
-data.list[4].weather[0].icon
-+".png";
-
-
-document.getElementById("day1").innerHTML = weekday[CheckDay(0)];
-document.getElementById("day2").innerHTML = weekday[CheckDay(1)];
-document.getElementById("day3").innerHTML = weekday[CheckDay(2)];
-document.getElementById("day4").innerHTML = weekday[CheckDay(3)];
-document.getElementById("day5").innerHTML = weekday[CheckDay(4)];
-
-weekday[0] = "Sunday";
-weekday[1] = "Monday";
-weekday[2] = "Tuesday";
-weekday[3] = "Wednesday";
-weekday[4] = "Thursday";
-weekday[5] = "Friday";
-weekday[6] = "Saturday";
-
+searchBtn.addEventListener('click', getLatitudeAndLongitude); 
